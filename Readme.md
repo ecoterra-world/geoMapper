@@ -12,7 +12,7 @@ npm intall
 2. **Preparing CSV File:**
 Place the CSV file in the root directory of the repository. Ensure the CSV file adheres to the following column titles:
 
-#,Nombre de cliente/proveedor,(L) Descripción Local,Dirección,Comuna,Ciudad,(L) Región
+Nombre,Descripción Local,Comuna,Region,Direccion,Cadena,Categoria,CategoriaID
 
 3. **Setting up the Google Maps API Key:**
    - Make a copy of the `.env.copy` file provided in the repository.
