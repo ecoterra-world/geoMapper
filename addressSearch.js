@@ -1,4 +1,4 @@
-const axios = require("axios"); // Importa el módulo 'axios'
+const axios = require("axios");
 const fs = require("fs");
 const csv = require("csv-parser");
 const readline = require("readline");
@@ -32,18 +32,14 @@ rl.question(
             results.push(data);
           })
           .on("end", () => {
-            // Escribir los resultados modificados en un nuevo archivo CSV
-            const writeStream = fs.createWriteStream(outputFile);
-            writeStream.write(
-              "#, Nombre de cliente/proveedor;(L) Descripción Local;Dirección;Comuna;Ciudad;(L) Región;lat;lng\n"
-            ); // Escribir el encabezado
+            const outputData = [];
 
             let currentIndex = 0;
 
             function processNextRow() {
               if (currentIndex < results.length) {
                 const row = results[currentIndex];
-                const address = `Chile ${row.Comuna} ${row["Dirección"]}`;
+                const address = `Chile ${row['Region']} ${row['Comuna']} ${row['Direccion']}`;
                 const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${apiKey}`;
 
                 axios
@@ -59,15 +55,7 @@ rl.question(
                         console.log(`Latitud: ${lat}, Longitud: ${lng}`);
                         row.lat = lat;
                         row.lng = lng;
-                        writeStream.write(
-                          `${row["#"]};${row["Nombre de cliente/proveedor"]};${
-                            row["(L) Descripción Local"]
-                          };${row["Dirección"]};${row["Comuna"]};${
-                            row["Ciudad"]
-                          };${
-                            row["(L) Región"]
-                          };${lat.toString()};${lng.toString()}\n`
-                        ); // Escribir cada fila
+                        outputData.push(row);
                       } else {
                         console.log(
                           `Dato: ${row["Nombre de cliente/proveedor"]}`
@@ -76,14 +64,13 @@ rl.question(
                         console.error(
                           "No se encontraron resultados para la dirección."
                         );
-                        writeStream.write(
-                          `${row["Nombre de cliente/proveedor"]};${row["(L) Descripción Local"]};${row["Dirección"]};${row["Comuna"]};${row["Ciudad"]};${row["(L) Región"]};${row.lat};${row.lng}\n`
-                        ); // Escribir cada fila
+                        outputData.push(row);
                       }
                     } else {
                       console.error(
                         `Error en la solicitud: ${response.status}`
                       );
+                      outputData.push(row);
                     }
 
                     // Procesar la siguiente fila después del retraso
@@ -92,9 +79,7 @@ rl.question(
                   })
                   .catch((error) => {
                     console.error(`Error: ${error.message}`);
-                    writeStream.write(
-                      `${row["#"]};${row["Nombre de cliente/proveedor"]};${row["(L) Descripción Local"]};${row["Comuna"]};${row["(L) Región"]};${row["Dirección"]};${row["(L) Cadena"]};${row.lat};${row.lng}\n`
-                    ); // Escribir cada fila
+                    outputData.push(row);
 
                     // Procesar la siguiente fila después del retraso
                     currentIndex++;
@@ -102,7 +87,9 @@ rl.question(
                   });
               } else {
                 // Todas las filas han sido procesadas
-                console.log("Archivo CSV modificado creado exitosamente.");
+                const jsonOutput = JSON.stringify(outputData, null, 2);
+                fs.writeFileSync(outputFile, jsonOutput);
+                console.log("Datos guardados en formato JSON exitosamente.");
               }
             }
 
